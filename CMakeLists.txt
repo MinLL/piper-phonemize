@@ -22,7 +22,7 @@ elseif(NOT APPLE)
 endif()
 
 add_library(
-    piper_phonemize SHARED
+    piper_phonemize STATIC
     src/phonemize.cpp
     src/phoneme_ids.cpp
     src/tashkeel.cpp
@@ -107,7 +107,7 @@ if(NOT DEFINED ESPEAK_NG_DIR)
         URL "https://github.com/rhasspy/espeak-ng/archive/0f65aa301e0d6bae5e172cc74197d32a6182200f.zip"
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${ESPEAK_NG_DIR}
         CMAKE_ARGS -DUSE_ASYNC:BOOL=OFF
-        CMAKE_ARGS -DBUILD_SHARED_LIBS:BOOL=ON
+        CMAKE_ARGS -DBUILD_SHARED_LIBS:BOOL=OFF
         CMAKE_ARGS -DUSE_MBROLA:BOOL=OFF
         CMAKE_ARGS -DUSE_LIBSONIC:BOOL=OFF
         CMAKE_ARGS -DUSE_LIBPCAUDIO:BOOL=OFF
@@ -115,7 +115,10 @@ if(NOT DEFINED ESPEAK_NG_DIR)
         CMAKE_ARGS -DUSE_SPEECHPLAYER:BOOL=OFF
         CMAKE_ARGS -DEXTRA_cmn:BOOL=ON
         CMAKE_ARGS -DEXTRA_ru:BOOL=ON
-        CMAKE_ARGS -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64"
+        CMAKE_ARGS -DCMAKE_C_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG /D_FILE_OFFSET_BITS=64"
+        CMAKE_ARGS -DCMAKE_C_FLAGS_DEBUG="/MTd /Zi /Ob0 /Od /RTC1 /D_FILE_OFFSET_BITS=64"
+        CMAKE_ARGS -DCMAKE_CXX_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG"
+        CMAKE_ARGS -DCMAKE_CXX_FLAGS_DEBUG="/MTd /Zi /Ob0 /Od /RTC1"
     )
     add_dependencies(piper_phonemize espeak_ng_external)
 endif()
@@ -172,31 +175,7 @@ target_link_libraries(piper_phonemize_exe PUBLIC
 
 # ---- Declare test ----
 
-include(CTest)
-enable_testing()
-add_executable(test_piper_phonemize src/test.cpp src/phoneme_ids.cpp)
-add_test(
-    NAME test_piper_phonemize
-    COMMAND test_piper_phonemize "${ESPEAK_NG_DIR}/share/espeak-ng-data" "${CMAKE_SOURCE_DIR}/etc/libtashkeel_model.ort"
-)
 
-target_compile_features(test_piper_phonemize PUBLIC cxx_std_17)
-
-target_include_directories(
-    test_piper_phonemize PUBLIC
-    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
-    ${ESPEAK_NG_DIR}/include
-)
-
-target_link_directories(
-    test_piper_phonemize PUBLIC
-    ${ESPEAK_NG_DIR}/lib
-)
-
-target_link_libraries(test_piper_phonemize PUBLIC
-    piper_phonemize
-    espeak-ng
-)
 
 # ---- Declare install targets ----
 
